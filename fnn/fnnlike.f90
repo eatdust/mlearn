@@ -159,7 +159,7 @@ contains
 
   subroutine initialize_fnn_like(filefnn, filebounds)
     use fnn, only : fnn_create_ann, fnn_print_connections
-    use iond, only :  read_boundaries
+    use ioml, only :  read_boundaries
     implicit none   
     character(len=*), intent(in) :: filefnn, filebounds
     
