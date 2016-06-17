@@ -143,8 +143,8 @@ contains
 
 
   subroutine initialize_shep_like(fileshep, filepost, filebounds)
-    use ioshep, only : load_shepdata, load_posterior
-    use iond, only :  read_boundaries
+    use ioshep, only : load_shepdata
+    use ioml, only :  read_boundaries, load_posterior
     implicit none   
     character(len=*), intent(in) :: fileshep, filepost, filebounds
     
