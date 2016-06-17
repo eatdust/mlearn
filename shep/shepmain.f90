@@ -35,7 +35,7 @@ program shepmain
 
 
 
-  call read_binned_posterior('mp_sr2ndlog_litecore120mhi_D_posterior_4D_10.dat',fdata,xdata)
+  call read_binned_posterior('test_posterior.dat',fdata,xdata)
 
   ndata = size(fdata)
   ndim = size(xdata,1)

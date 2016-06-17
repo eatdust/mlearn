@@ -3,21 +3,26 @@ ext=$(shell uname | cut -c1-3)
 ifeq ($(ext),Lin)
 FC=gfortran
 #FCFLAGS= -O3 -fopenmp -ffast-math -march=haswell  -fprefetch-loop-arrays -funroll-loops
-FCFLAGS=-g -DDOUBLEFANN
-LFLAGS= -lblas -llapack
+FCFLAGS=-O -DDOUBLEFANN
+LFLAGS= -ldoublefann 
 #FC=ifort
 #FCFLAGS = -g -openmp -mkl -assume byterecl -free
 #LFLAGS = -lfann
 #CPP=cpp -P -traditional-cpp 
 endif 
 
-OBJSCOM = fnnprec.o
+OBJSCOM = prec.o ioml.o
 
-OBJSFANN = fann.o fnn.o
+OBJSFANN = fnnprec.o fann.o fnn.o
 
+example.$(ext): fann.o example.o
+	$(FC) $(FCFLAGS) fann.o example.o -o $@ $(LFLAGS)
+
+fnnmain.$(ext): $(OBJSCOM) $(OBJSFANN) fnnmain.o
+	$(FC) $(FCFLAGS) $(OBJSCOM) $(OBJSFANN) fnnmain.o -o $@ $(LFLAGS)
 
 testfnn.$(ext): $(OBJSCOM) $(OBJSFANN) testfnn.o
-	$(FC) $(FCFLAGS) $(OBJSCOM) $(OBJSFANN) testfnn.o -o $@ $(LFLAGS) -ldoublefann -lfann -lfixedfann
+	$(FC) $(FCFLAGS) $(OBJSCOM) $(OBJSFANN) testfnn.o -o $@ $(LFLAGS)
 
 fnd.o: fann.o
 
@@ -32,6 +37,9 @@ fnd.o: fann.o
 
 %.o: %.F95
 	$(FC) $(FCFLAGS) -c $*.F95
+
+%.o: ../common/%.f90
+	$(FC) $(FCFLAGS) -c $<
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

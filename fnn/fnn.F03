@@ -1,5 +1,5 @@
 module fnn
-  use prec
+  use fnnprec
   use fann
 
   implicit none
@@ -62,6 +62,11 @@ module fnn
   public fnn_train, fnn_test, fnn_get_mse, fnn_get_bit_fail, fnn_reset_mse
   public fnn_train_on_data, fnn_train_on_file, fnn_train_epoch, fnn_test_data
   public fnn_read_train_from_file, fnn_create_train_empty, fnn_create_train_from_callback
+#ifdef FANN23
+  public fnn_create_train_array
+  public fnn_get_train_input, fnn_get_train_output, fnn_get_min_train_input
+  public fnn_get_max_train_input, fnn_get_min_train_output, fnn_get_max_train_output
+#endif
   public fnn_free_train, fnn_shuffle_train_data, fnn_scale_train, fnn_descale_train
   public fnn_set_input_scaling_params, fnn_set_output_scaling_params, fnn_set_scaling_params
   public fnn_clear_scaling_params, fnn_scale_input, fnn_scale_output
@@ -644,7 +649,6 @@ contains
 
   
 
-
   subroutine fnn_create_train_from_callback(ndata,ndim,nout,xdata,fdata)
     implicit none
     integer(ip), intent(in) :: ndim, ndata, nout
@@ -653,9 +657,9 @@ contains
 
     integer(C_INT) :: num_data, num_input, num_output
 
-    num_data = ndata
-    num_input = ndim
-    num_output = nout
+    num_data = int(ndata,C_INT)
+    num_input = int(ndim,C_INT)
+    num_output = int(nout,C_INT)
 
     allocate(inTrainData(ndim,ndata))
     allocate(outTrainData(nout,ndata))
@@ -672,20 +676,21 @@ contains
 
   
 
+
   subroutine fnn_train_callback(num, num_input, num_output, input, output) bind(C)
     implicit none
 
     integer(C_INT), value :: num, num_input, num_output
 #ifdef FIXEDFANN
-    integer(FANN_TYPE), dimension(num_input) :: input
-    integer(FANN_TYPE), dimension(num_output) :: output
+    integer(FANN_TYPE), dimension(0:num_input-1) :: input
+    integer(FANN_TYPE), dimension(0:num_output-1) :: output
 
     input(0:num_input-1) = int(inTrainData(1:num_input,num+1),FANN_TYPE)
     output(0:num_output-1) = int(outTrainData(1:num_output,num+1),FANN_TYPE)
 
 #else
-    real(FANN_TYPE), dimension(num_input) :: input
-    real(FANN_TYPE), dimension(num_output) :: output
+    real(FANN_TYPE), dimension(0:num_input-1) :: input
+    real(FANN_TYPE), dimension(0:num_output-1) :: output
 
     input(0:num_input-1) = real(inTrainData(1:num_input,num+1),FANN_TYPE)
     output(0:num_output-1) = real(outTrainData(1:num_output,num+1),FANN_TYPE)
@@ -705,7 +710,8 @@ contains
   
 
 
-  subroutine fnn_shuffle_train_data()
+
+ subroutine fnn_shuffle_train_data()
     implicit none
 
     call fann_shuffle_train_data(traindata)
@@ -713,6 +719,110 @@ contains
   end subroutine fnn_shuffle_train_data
 
 
+
+#ifdef FANN23
+
+
+  subroutine fnn_create_train_array(ndata,ndim,input,nout,output)
+    import C_PTR, FANN_TYPE
+    implicit none
+    integer(ip), intent(in) :: ndata, ndim, nout
+    integer(C_INT) :: num_data, num_input, num_output
+#ifdef FIXEDFANN
+    integer(FANN_TYPE), dimension(nin, ndata), intent(in), target :: input
+    integer(FANN_TYPE), dimension(nout,ndata), intent(in), target :: output
+    integer(FANN_TYPE), dimension(:), pointer :: ptrin => null()
+    integer(FANN_TYPE), dimension(:), pointer :: ptrout => null()
+#else
+    real(FANN_TYPE), dimension(nin,ndata), intent(in), target :: input
+    real(FANN_TYPE), dimension(nout,ndata), intent(in), target :: output
+    real(FANN_TYPE), dimension(:), pointer :: ptrin => null()
+    real(FANN_TYPE), dimension(:), pointer :: ptrout => null()
+#endif
+
+
+    num_data = int(ndata,C_INT)
+    num_input = int(ndim,C_INT)
+    num_output = int(nout,C_INT)
+
+    !maybe it is the transpose?
+    ptrin(0:ndata*ndim-1) => input(1:nin,1:ndata)
+    ptrout(0:ndata*nout-1) => output(1:nout,1:ndata)
+
+    traindata = fann_create_train_array(num_data,num_input,ptrin,num_output,ptrout)
+
+    ptrin => null()
+    ptrout => null()
+  end subroutine fnn_create_train_array
+
+
+  function fnn_get_train_input(index)
+    implicit none
+    real(fp) :: fnn_get_train_input
+    integer(ip), intent(in) :: index
+    integer(C_INT) :: position
+
+    position = int(index,C_INT)
+
+    fnn_get_train_input = real(fann_get_train_input(traindata,position),fp)
+
+  end function fnn_get_train_input
+
+
+
+  function fnn_get_train_output(index)
+    implicit none
+    real(fp) :: fnn_get_train_output
+    integer(ip), intent(in) :: index
+    integer(C_INT) :: position
+
+    position = int(index,C_INT)
+
+    fnn_get_train_output = real(fann_get_train_output(traindata,position),fp)
+
+  end function fnn_get_train_output
+
+
+ 
+
+  function fnn_get_min_train_input()
+    implicit none
+    real(fp) :: fnn_get_min_train_input
+
+    fnn_get_min_train_input = real(fann_get_min_train_input(traindata),fp)
+    
+  end function fnn_get_min_train_input
+
+
+
+  function fnn_get_max_train_input()
+    implicit none
+    real(fp) :: fnn_get_max_train_input
+
+    fnn_get_max_train_input = real(fann_get_max_train_input(traindata),fp)
+
+  end function fnn_get_max_train_input
+
+    
+
+  function fnn_get_min_train_output()
+    implicit none
+    real(fp) :: fnn_get_min_train_output
+
+    fnn_get_min_train_output = real(fann_get_min_train_output(traindata),fp)
+    
+  end function fnn_get_min_train_output
+
+
+
+  function fnn_get_max_train_output()
+    implicit none
+    real(fp) :: fnn_get_max_train_output
+
+    fnn_get_max_train_output = real(fann_get_max_train_output(traindata),fp)
+
+  end function fnn_get_max_train_output
+#endif
 
 
   subroutine fnn_scale_train()

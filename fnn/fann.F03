@@ -1456,8 +1456,109 @@ module fann
        integer(C_INT), value :: cascade_num_candidate_groups
      end subroutine fann_set_cascade_num_candidate_groups
 
+
+
+#ifdef FANN23
+
+     function fann_create_train_array(num_data,num_input,input,num_output,output) bind(C)
+       import C_PTR, FANN_TYPE
+       implicit none
+       type(C_PTR) :: fann_create_train_array
+       integer(C_INT), value :: num_data, num_input, num_output
+#ifdef FIXEDFANN
+       integer(FANN_TYPE), dimension(*) :: input,output
+#else
+       real(FANN_TYPE), dimension(*) :: input, output
+#endif
+     end function fann_create_train_array
+
+
+     function fann_get_train_input(data,position) bind(C)
+       import C_PTR, C_INT, FANN_TYPE
+       implicit none
+#ifdef FIXEDFANN
+       integer(FANN_TYPE) :: fann_get_train_input
+#else
+       real(FANN_TYPE) :: fann_get_train_input
+#endif
+       type(C_PTR), value :: data
+       integer(C_INT), value :: position
+     end function fann_get_train_input
+
+
+
+     function fann_get_train_output(data,position) bind(C)
+       import C_PTR, C_INT, FANN_TYPE
+       implicit none
+#ifdef FIXEDFANN
+       integer(FANN_TYPE) :: fann_get_train_output
+#else
+       real(FANN_TYPE) :: fann_get_train_output
+#endif
+       type(C_PTR), value :: data
+       integer(C_INT), value :: position
+     end function fann_get_train_output
+
+     
+
+     function fann_get_min_train_input(data) bind(C)
+       import C_PTR, C_INT, FANN_TYPE
+       implicit none
+#ifdef FIXEDFANN
+       integer(FANN_TYPE) :: fann_get_min_train_input
+#else
+       real(FANN_TYPE) :: fann_get_min_train_input
+#endif
+       type(C_PTR), value :: data
+     end function fann_get_min_train_input
+
+
+
+     function fann_get_max_train_input(data) bind(C)
+       import C_PTR, C_INT, FANN_TYPE
+       implicit none
+#ifdef FIXEDFANN
+       integer(FANN_TYPE) :: fann_get_max_train_input
+#else
+       real(FANN_TYPE) :: fann_get_max_train_input
+#endif
+       type(C_PTR), value :: data
+     end function fann_get_max_train_input
+
+    
+     
+     function fann_get_min_train_output(data) bind(C)
+       import C_PTR, C_INT, FANN_TYPE
+       implicit none
+#ifdef FIXEDFANN
+       integer(FANN_TYPE) :: fann_get_min_train_output
+#else
+       real(FANN_TYPE) :: fann_get_min_train_output
+#endif
+       type(C_PTR), value :: data
+     end function fann_get_min_train_output
+
+
+
+     function fann_get_max_train_output(data) bind(C)
+       import C_PTR, C_INT, FANN_TYPE
+       implicit none
+#ifdef FIXEDFANN
+       integer(FANN_TYPE) :: fann_get_max_train_output
+#else
+       real(FANN_TYPE) :: fann_get_max_train_output
+#endif
+       type(C_PTR), value :: data
+     end function fann_get_max_train_output
+
+
+#endif
+
+
+
     
   end interface
+
 
 
 contains

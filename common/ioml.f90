@@ -13,10 +13,42 @@ module ioml
   public livewrite, delete_file
 
 
+  interface read_binned_posterior
+     module procedure read_binned_posterior_vector, read_binned_posterior_matrix
+  end interface read_binned_posterior
+
+
+  interface load_posterior
+     module procedure load_posterior_vector, load_posterior_matrix
+  end interface load_posterior
+
+
+  interface save_posterior
+     module procedure save_posterior_vector, save_posterior_matrix
+  end interface save_posterior
+
+
 contains
 
 
-  subroutine read_binned_posterior(filename,posterior,params)
+
+  subroutine read_binned_posterior_matrix(filename,posterior,params)
+    implicit none
+    character(len=*), intent(in) :: filename   
+    real(fp), dimension(:,:),  pointer :: posterior
+    real(fp), dimension(:,:), pointer :: params
+
+    real(fp), dimension(:), pointer :: postvector
+
+    call read_binned_posterior_vector(filename,postvector,params)
+
+    posterior(1:1,1:size(postvector,1)) => postvector(1:size(postvector,1))
+    
+  end subroutine read_binned_posterior_matrix
+
+
+
+  subroutine read_binned_posterior_vector(filename,posterior,params)
     implicit none
     character(len=*), intent(in) :: filename   
 
@@ -29,8 +61,8 @@ contains
 
     integer, parameter :: nunit = 210
 
-    real(fp), dimension(:), intent(inout), pointer :: posterior
-    real(fp), dimension(:,:), intent(inout), pointer :: params
+    real(fp), dimension(:),  pointer :: posterior
+    real(fp), dimension(:,:), pointer :: params
 
     real(fp), save :: fpbuffer
     character(LEN=200) :: cbuffer
@@ -112,11 +144,26 @@ contains
     enddo
     close(nunit)
 
-  end subroutine read_binned_posterior
+  end subroutine read_binned_posterior_vector
 
   
 
-  subroutine save_posterior(filename,f,x)
+
+  subroutine save_posterior_matrix(filename,f,x)
+    implicit none
+    character(len=*), intent(in) :: filename   
+    real(fp), dimension(:,:), intent(in) :: f
+    real(fp), dimension(:,:), intent(in) :: x
+
+    call save_posterior_vector(filename,f(1,:),x)
+
+  end subroutine save_posterior_matrix
+
+
+
+
+
+  subroutine save_posterior_vector(filename,f,x)
     implicit none
     character(len=*), intent(in) :: filename   
     real(fp), dimension(:), intent(in) :: f
@@ -139,10 +186,28 @@ contains
     enddo
     
     close(nunit)
-  end subroutine save_posterior
+  end subroutine save_posterior_vector
 
 
-  subroutine load_posterior(filename,f,x)
+
+  subroutine load_posterior_matrix(filename,f,x)
+    implicit none
+    character(len=*), intent(in) :: filename
+    real(fp), dimension(:,:), pointer :: f
+    real(fp), dimension(:,:), pointer :: x
+
+    real(fp), dimension(:), pointer :: fvec
+
+    call load_posterior_vector(filename,fvec,x)
+
+    f(1:1,1:size(fvec,1)) => fvec(1:size(fvec,1))
+
+  end subroutine load_posterior_matrix
+
+
+  
+
+  subroutine load_posterior_vector(filename,f,x)
     implicit none
     character(len=*), intent(in) :: filename   
     real(fp), dimension(:), pointer :: f
@@ -169,7 +234,9 @@ contains
     
     close(nunit)
 
-  end subroutine load_posterior
+  end subroutine load_posterior_vector
+
+
 
 
 
@@ -207,7 +274,7 @@ contains
     ndata = size(xdata,2)
 
     if ((size(xcubes,1).ne.ndim).or.(size(xcubes,2).ne.ndata)) then
-       stop 'cube_rbfparamspace: mismatch arrays!'
+       stop 'cube_paramspace: mismatch arrays!'
     endif
 
     allocate(xmin(ndim), xmax(ndim))
@@ -245,7 +312,7 @@ contains
     
     open (nunit, file=filename, form='unformatted', &
          access='direct', status='old', recl = 1, iostat=stat)
-    if (stat .ne. 0) stop 'read_hearder: missing file!'
+    if (stat .ne. 0) stop 'read_header: missing file!'
     
     ! process header line of the file
     j = 0

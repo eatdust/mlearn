@@ -34,7 +34,7 @@ program rbfmain
   logical, parameter :: training = .true.
 
 
-  call read_binned_posterior('sr2ndlog_posterior_3D_13.dat',fdata,xdata)
+  call read_binned_posterior('test_posterior.dat',fdata,xdata)
 
   ndata = size(fdata)
   ndim = size(xdata,1)
@@ -43,7 +43,7 @@ program rbfmain
   allocate(ictrs(ndim))
   
 !  ictrs = (/4,4,4,11/)
-  ictrs = (/12,18,12/)
+  ictrs = (/12,18,12,12/)
 !  ictrs = (/12,20,16/)
 
   nctrs = product(ictrs)
