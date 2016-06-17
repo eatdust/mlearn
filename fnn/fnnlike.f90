@@ -185,6 +185,7 @@ contains
   function fnnlike_eval(x)
     use fnn, only : fnn_run
     implicit none
+    real(fp) :: fnnlike_eval
     real(fp), dimension(nout) :: feval
     real(fp), dimension(:), intent(in) :: x
 
