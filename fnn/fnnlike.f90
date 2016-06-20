@@ -34,7 +34,7 @@ contains
 
 
   subroutine free_fnn()
-    use fnn, only : fnn_check_amm, fnn_free_ann
+    use fnn, only : fnn_check_ann, fnn_free_ann
     implicit none
     
 
