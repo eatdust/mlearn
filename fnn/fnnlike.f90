@@ -153,7 +153,11 @@ contains
     ndim = fnn_get_num_input()
     nout = fnn_get_num_output()
 
-    if (display) call fnn_print_connections()
+    if (display) then
+       write(*,*)
+       call fnn_print_connections()
+       write(*,*)
+    endif
 
   end subroutine initialize_fnn_like
 

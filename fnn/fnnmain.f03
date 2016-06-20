@@ -71,7 +71,7 @@ program fnnmain
 
 
   nNeurons(1) = ndim
-  nNeurons(2) = 15
+  nNeurons(2) = 20
   nNeurons(3) = nout
 
   
@@ -88,11 +88,20 @@ program fnnmain
      call fnn_set_activation_function_output('FANN_SIGMOID')
      call fnn_print_connections()
 
-     
      call fnn_create_train(ndata,ndim,nout,xcubes,fdata)
      call fnn_set_training_algorithm('FANN_TRAIN_RPROP')
-!     call fnn_set_learning_rate(0.5_fp)
+
+     call fnn_set_train_error_function('FANN_ERRORFUNC_LINEAR')
+     print *,'error function: ',fnn_get_train_error_function()
+
+!     call fnn_set_bit_fail_limit(0.5_fp)
+!     print *,'get bit', fnn_get_bit_fail_limit()
+     call fnn_set_train_stop_function('FANN_STOPFUNC_BIT')
+
+
+!     call fnn_set_learning_rate(0.9_fp)
      print *,'learning rate= ',fnn_get_learning_rate()
+
      call fnn_scale_output_train_data(0._fp,1._fp)
      
      call fnn_train_on_data(maxEpochs,epochBetweenReports,maxError)
@@ -120,7 +129,8 @@ program fnnmain
 
 
 
-
+     call fnn_set_train_error_function('FANN_ERRORFUNC_LINEAR')
+     print *,'error function: ',fnn_get_train_error_function()
 
      maxNeurons = 30
      neuronsBetweenReports = 1
@@ -139,9 +149,12 @@ program fnnmain
 
      call fnn_set_cascade_activation_steepnesses((/0.1_fp,0.2_fp,0.3_fp,0.4_fp,0.5_fp &
           ,0.6_fp,0.7_fp,0.8_fp,0.9_fp/))
+
      call fnn_set_train_stop_function('FANN_STOPFUNC_BIT')
-     call fnn_set_bit_fail_limit(0.3_fp)
-     print *,'get bit', fnn_get_bit_fail_limit()
+
+!     call fnn_set_bit_fail_limit(0.3_fp)
+!     print *,'get bit', fnn_get_bit_fail_limit()
+
     call fnn_set_training_algorithm('FANN_TRAIN_RPROP')
 
 
