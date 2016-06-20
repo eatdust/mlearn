@@ -51,14 +51,14 @@ module fnn
 
   public fnn_save_ann, fnn_save_to_fixed, fnn_create_ann, fnn_run, fann_connection
   public fnn_create_standard_array, fnn_create_sparse_array, fnn_create_shortcut_array
-  public fnn_free_ann, fnn_randomize_weights, fnn_init_weights
+  public fnn_check_ann, fnn_free_ann, fnn_randomize_weights, fnn_init_weights
   public fnn_print_connections, fnn_print_parameters, fnn_get_num_input, fnn_get_num_output
   public fnn_get_total_neurons, fnn_get_total_connections, fnn_get_network_type
   public fnn_get_connection_rate, fnn_get_num_layers, fnn_get_layer_array, fnn_get_bias_array
   public fnn_get_connection_array, fnn_set_weight_array, fnn_set_weight
   public fnn_get_decimal_point, fnn_get_multiplier
 
-  public fnn_create_train, fnn_read_train
+  public fnn_create_train, fnn_read_train, fnn_free_train, fnn_check_train
   public fnn_train, fnn_test, fnn_get_mse, fnn_get_bit_fail, fnn_reset_mse
   public fnn_train_on_data, fnn_train_on_file, fnn_train_epoch, fnn_test_data
   public fnn_read_train_from_file, fnn_create_train_empty, fnn_create_train_from_callback
@@ -67,7 +67,7 @@ module fnn
   public fnn_get_train_input, fnn_get_train_output, fnn_get_min_train_input
   public fnn_get_max_train_input, fnn_get_min_train_output, fnn_get_max_train_output
 #endif
-  public fnn_free_train, fnn_shuffle_train_data, fnn_scale_train, fnn_descale_train
+  public fnn_shuffle_train_data, fnn_scale_train, fnn_descale_train
   public fnn_set_input_scaling_params, fnn_set_output_scaling_params, fnn_set_scaling_params
   public fnn_clear_scaling_params, fnn_scale_input, fnn_scale_output
   public fnn_descale_input, fnn_descale_output
@@ -235,6 +235,17 @@ contains
     fnn_run => f_fann_run(ann,fannInput)        
     
   end function fnn_run
+
+
+
+  function fnn_check_ann()
+    implicit none
+    logical :: fnn_check_ann
+
+    fnn_check_ann = C_ASSOCIATED(ann)
+
+  end function fnn_check_ann
+
 
 
   subroutine fnn_free_ann()
@@ -700,7 +711,18 @@ contains
   end subroutine  fnn_train_callback
 
 
-  
+
+  function fnn_check_train()
+    implicit none
+    logical :: fnn_check_train
+
+    fnn_check_train = C_ASSOCIATED(traindata)
+
+  end function fnn_check_train
+
+
+
+
   subroutine fnn_free_train()
     implicit none
 

@@ -6,19 +6,16 @@ module fnnlike
   private
    
  
-  integer(ip), save :: ndim, ndata, nout
+  integer(ip), save :: ndim, nout
 
-  real(fp), save, dimension(:,:), pointer :: xcubes => null()
-  real(fp), save, dimension(:,:), pointer :: fdata => null()
   real(fp), save, dimension(:), pointer :: xpmin => null(), xpmax=>null()
-  real(fp), save :: fmin = huge(1._fp)
-  real(fp), save :: fmax = -huge(1._fp)
+  real(fp), save :: fmin = huge(1._fp), fmax = -huge(1._fp)
 
   logical, parameter :: display = .true.
 
   public initialize_fnn_like, free_fnn
   public fnnlike_eval, uncubize_fnnparams, cubize_fnnparams
-  public check_fnn, get_fnn_ndim, get_fnn_nout, get_fnn_ndata
+  public check_fnn, get_fnn_ndim, get_fnn_nout
   public cutmin_fnnparams, cutmax_fnnparams
   public get_fnn_xpmin, get_fnn_xpmax
   public get_fnn_fmin, get_fnn_fmax
@@ -27,29 +24,27 @@ contains
 
 
   function check_fnn()
+    use fnn, only : fnn_check_ann
     implicit none
     logical :: check_fnn
     
-    check_fnn = associated(xcubes) .and. associated(fdata) &
-         .and. associated(xpmin) .and. associated(xpmax)
+    check_fnn = fnn_check_ann() .and. associated(xpmin) .and. associated(xpmax)
 
   end function check_fnn
 
 
   subroutine free_fnn()
+    use fnn, only : fnn_check_amm, fnn_free_ann
     implicit none
     
 
     if (.not.check_fnn()) stop 'free_fnn: data not allocated!'
 
-    if (associated(xcubes)) deallocate(xcubes)
-    xcubes => null()
-    if (associated(fdata)) deallocate(fdata)
-    fdata => null()
     if (associated(xpmin)) deallocate(xpmin)
     xpmin => null()
     if (associated(xpmin)) deallocate(xpmax)
     xpmax => null()
+    if (fnn_check_ann()) call fnn_free_ann()
 
   end subroutine free_fnn
 
@@ -84,18 +79,6 @@ contains
   end function get_fnn_ndim
 
 
-  function get_fnn_ndata()
-    implicit none
-    integer :: get_fnn_ndata
-
-    if (.not.check_fnn()) then
-       get_fnn_ndata = 0
-       return
-    endif
-
-    get_fnn_ndata = ndata
-
-  end function get_fnn_ndata
 
 
   function get_fnn_xpmin(i)
@@ -159,22 +142,16 @@ contains
 
   subroutine initialize_fnn_like(filefnn, filebounds)
     use fnn, only : fnn_create_ann, fnn_print_connections
+    use fnn, only : fnn_get_num_input, fnn_get_num_output
     use ioml, only :  read_boundaries
     implicit none   
     character(len=*), intent(in) :: filefnn, filebounds
     
     call fnn_create_ann(filefnn)
     call read_boundaries(filebounds,xpmin,xpmax,fmin,fmax)
-
-    if (size(fdata,2).ne.size(xcubes,2)) then
-       stop 'initialize_fnn_like: size mismatch!'
-    endif
-
-    if (size(fdata,1).ne.1) stop 'initialize_fnn_like: boo?'
-
-    ndim = size(xcubes,1)
-    nout = size(fdata,1)
-    ndata = size(fdata,2)
+    
+    ndim = fnn_get_num_input()
+    nout = fnn_get_num_output()
 
     if (display) call fnn_print_connections()
 

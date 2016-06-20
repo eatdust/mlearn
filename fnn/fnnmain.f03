@@ -38,7 +38,7 @@ program fnnmain
 
   integer(ip) :: maxNeurons, neuronsBetweenReports
 
-  character(len=*), parameter :: training = 'cascade'
+  character(len=*), parameter :: training = 'normal'
 
 
   call read_binned_posterior('test_posterior.dat',fdata,xdata)

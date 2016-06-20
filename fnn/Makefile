@@ -15,9 +15,6 @@ OBJSCOM = prec.o ioml.o
 
 OBJSFANN = fnnprec.o fann.o fnn.o
 
-example.$(ext): fann.o example.o
-	$(FC) $(FCFLAGS) fann.o example.o -o $@ $(LFLAGS)
-
 fnnmain.$(ext): $(OBJSCOM) $(OBJSFANN) fnnmain.o
 	$(FC) $(FCFLAGS) $(OBJSCOM) $(OBJSFANN) fnnmain.o -o $@ $(LFLAGS)
 
