@@ -12,6 +12,7 @@ program fnnmain
 
   real(fp), dimension(:), pointer :: xnmin, xnmax
   real(fp), dimension(:), allocatable :: x   
+  real(fp), dimension(1) :: feval
 
   integer, parameter :: lenmax = 32
   character(len=lenmax), dimension(:), allocatable :: names
@@ -39,9 +40,9 @@ program fnnmain
   integer(ip) :: maxNeurons, neuronsBetweenReports
 
   character(len=*), parameter :: training = 'normal'
+  logical, parameter :: logOfPost = .false.
 
-
-  call read_binned_posterior('test_posterior.dat',fdata,xdata)
+  call read_binned_posterior('sr2ndlog_litecore120_3_mhi_D_posterior_4D_10.dat',fdata,xdata,logOfPost)
 
   ndata = size(fdata,2)
   ndim = size(xdata,1)
@@ -50,6 +51,7 @@ program fnnmain
 
   if (size(xdata,2).ne.ndata) stop 'internal error'
  
+
   fmax = maxval(fdata)
   fmin = minval(fdata)
   print *,'fdata max',fmax
@@ -67,42 +69,66 @@ program fnnmain
 
   call cubize_paramspace(xdata,xcubes)
 
-
+!normalize data
+  fdata = (fdata - fmin)/(fmax-fmin)
 
 
   nNeurons(1) = ndim
-  nNeurons(2) = 20
+  nNeurons(2) = 8 !7
   nNeurons(3) = nout
 
   
   maxEpochs = 10000
   epochBetweenReports = 100
-  maxError = 1e-3
+  maxError = 1e-4
 
   select case (training)
 
   case ('normal')
    
      call fnn_create_ann(numLayers,nNeurons)
+!     call fnn_set_activation_function_hidden('FANN_GAUSSIAN')
+     call fnn_set_activation_function_output('FANN_GAUSSIAN')
      call fnn_set_activation_function_hidden('FANN_SIGMOID')
-     call fnn_set_activation_function_output('FANN_SIGMOID')
+!     call fnn_set_activation_function_output('FANN_SIGMOID')
+
+
+!     call fnn_set_activation_steepness_hidden(0.9_fp)
+     call fnn_set_activation_steepness_output(0.9_fp)
      call fnn_print_connections()
 
      call fnn_create_train(ndata,ndim,nout,xcubes,fdata)
      call fnn_set_training_algorithm('FANN_TRAIN_RPROP')
 
-     call fnn_set_train_error_function('FANN_ERRORFUNC_LINEAR')
-     print *,'error function: ',fnn_get_train_error_function()
+     print *, 'RPROP factors= ',fnn_get_rprop_increase_factor(), fnn_get_rprop_decrease_factor()
+!     call fnn_set_rprop_increase_factor(1.5_fp)
+!     call fnn_set_rprop_decrease_factor(0.2_fp)
+!     print *, 'RPROP factors= ',fnn_get_rprop_increase_factor(), fnn_get_rprop_decrease_factor()
 
-!     call fnn_set_bit_fail_limit(0.5_fp)
-!     print *,'get bit', fnn_get_bit_fail_limit()
+!     print *, 'RPROP deltas= ',fnn_get_rprop_delta_zero(), fnn_get_rprop_delta_min() &
+!          ,fnn_get_rprop_delta_max()
+!     call fnn_set_rprop_delta_min(0.0_fp)
+!     call fnn_set_rprop_delta_max(100._fp)
+!     call fnn_set_rprop_delta_zero(0.1_fp)
+!     print *, 'RPROP deltas= ',fnn_get_rprop_delta_zero(), fnn_get_rprop_delta_min() &
+!          ,fnn_get_rprop_delta_max()
+
+     call fnn_shuffle_train_data()
+
+!     call fnn_randomize_weights(0._fp,0.1_fp)
+
+!     call fnn_set_train_error_function('FANN_ERRORFUNC_LINEAR')
+!     print *,'error function: ',fnn_get_train_error_function()
+
+     call fnn_set_bit_fail_limit(0.1_fp)
+     print *,'get bit', fnn_get_bit_fail_limit()
      call fnn_set_train_stop_function('FANN_STOPFUNC_BIT')
 
 
 !     call fnn_set_learning_rate(0.9_fp)
-     print *,'learning rate= ',fnn_get_learning_rate()
+!     print *,'learning rate= ',fnn_get_learning_rate()
 
-     call fnn_scale_output_train_data(0._fp,1._fp)
+!     call fnn_scale_output_train_data(0._fp,1._fp)
      
      call fnn_train_on_data(maxEpochs,epochBetweenReports,maxError)
 !     call fnn_save_train('fnntrain.dat')
@@ -125,7 +151,7 @@ program fnnmain
 
 
      call fnn_create_train(ndata,ndim,nout,xcubes,fdata)
-     call fnn_scale_output_train_data(0._fp,1._fp)
+!     call fnn_scale_output_train_data(0._fp,1._fp)
 
 
 
@@ -175,7 +201,7 @@ program fnnmain
 
      
   end select
-
+   
 
 !test the running  
 
