@@ -12,6 +12,7 @@ module fnnlike
   real(fp), save :: fmin = huge(1._fp), fmax = -huge(1._fp)
 
   logical, parameter :: display = .true.
+  logical, parameter :: loglearned = .false.
 
   public initialize_fnn_like, free_fnn
   public fnnlike_eval, uncubize_fnnparams, cubize_fnnparams
@@ -176,7 +177,11 @@ contains
 
     feval = real(fnn_run(x),fp)
 
-    fnnlike_eval = feval(1) * (fmax-fmin) + fmin
+    if (loglearned) then
+       fnnlike_eval = feval(1) * (fmax-fmin) + fmin
+    else
+       fnnlike_eval = log( feval(1) * (fmax-fmin) + fmin )
+    endif
 
   end function fnnlike_eval
 

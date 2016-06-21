@@ -32,15 +32,16 @@ contains
 
 
 
-  subroutine read_binned_posterior_matrix(filename,posterior,params)
+  subroutine read_binned_posterior_matrix(filename,posterior,params,logize)
     implicit none
     character(len=*), intent(in) :: filename   
     real(fp), dimension(:,:),  pointer :: posterior
     real(fp), dimension(:,:), pointer :: params
+    logical, intent(in), optional :: logize
 
     real(fp), dimension(:), pointer :: postvector
 
-    call read_binned_posterior_vector(filename,postvector,params)
+    call read_binned_posterior_vector(filename,postvector,params,logize)
 
     posterior(1:1,1:size(postvector,1)) => postvector(1:size(postvector,1))
     
@@ -48,11 +49,14 @@ contains
 
 
 
-  subroutine read_binned_posterior_vector(filename,posterior,params)
+  subroutine read_binned_posterior_vector(filename,posterior,params,logize)
     implicit none
     character(len=*), intent(in) :: filename   
+    real(fp), dimension(:),  pointer :: posterior
+    real(fp), dimension(:,:), pointer :: params
+    logical, intent(in), optional :: logize
 
-    logical, parameter :: logpost = .true.
+    logical, save :: logpost = .true.
     integer, parameter :: nzeroskip = 0
 
     real(fp), save :: eps = exp(-10._fp)
@@ -61,8 +65,6 @@ contains
 
     integer, parameter :: nunit = 210
 
-    real(fp), dimension(:),  pointer :: posterior
-    real(fp), dimension(:,:), pointer :: params
 
     real(fp), save :: fpbuffer
     character(LEN=200) :: cbuffer
@@ -70,6 +72,9 @@ contains
     real(fp), dimension(ndimmax), save :: statbuffer
 
     integer(ip) :: i,j,ioerr,nrec,ndim,nnzero,count
+
+    if (present(logize)) logpost = logize
+
 
     if (associated(posterior).or.associated(params)) then
        stop 'read_binned_posterior: data already loaded!'
