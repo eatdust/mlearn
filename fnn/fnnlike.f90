@@ -1,5 +1,6 @@
 module fnnlike
   use fnnprec
+  use fann
   implicit none
 
 
@@ -10,6 +11,9 @@ module fnnlike
 
   real(fp), save, dimension(:), pointer :: xpmin => null(), xpmax=>null()
   real(fp), save :: fmin = huge(1._fp), fmax = -huge(1._fp)
+
+  type(C_PTR) :: ann
+
 
   logical, parameter :: display = .true.
   logical, parameter :: loglearned = .false.
@@ -25,27 +29,23 @@ contains
 
 
   function check_fnn()
-    use fnn, only : fnn_check_ann
     implicit none
     logical :: check_fnn
     
-    check_fnn = fnn_check_ann() .and. associated(xpmin) .and. associated(xpmax)
+    check_fnn = C_ASSOCIATED(ann) .and. associated(xpmin) .and. associated(xpmax)
 
   end function check_fnn
 
 
   subroutine free_fnn()
-    use fnn, only : fnn_check_ann, fnn_free_ann
-    implicit none
-    
-
+    implicit none    
     if (.not.check_fnn()) stop 'free_fnn: data not allocated!'
 
     if (associated(xpmin)) deallocate(xpmin)
     xpmin => null()
     if (associated(xpmin)) deallocate(xpmax)
     xpmax => null()
-    if (fnn_check_ann()) call fnn_free_ann()
+    if (C_ASSOCIATED(ann)) call fann_destroy(ann)
 
   end subroutine free_fnn
 
@@ -141,22 +141,21 @@ contains
 
 
 
-  subroutine initialize_fnn_like(filefnn, filebounds)
-    use fnn, only : fnn_create_ann, fnn_print_connections
-    use fnn, only : fnn_get_num_input, fnn_get_num_output
+  subroutine initialize_fnn_like(filefnn, filebounds)   
     use ioml, only :  read_boundaries
     implicit none   
     character(len=*), intent(in) :: filefnn, filebounds
     
-    call fnn_create_ann(filefnn)
+    ann = fann_create_from_file(f_c_string(filefnn))
+
     call read_boundaries(filebounds,xpmin,xpmax,fmin,fmax)
     
-    ndim = fnn_get_num_input()
-    nout = fnn_get_num_output()
+    ndim = int(fann_get_num_input(ann),ip)
+    nout = int(fann_get_num_output(ann),ip)
 
     if (display) then
        write(*,*)
-       call fnn_print_connections()
+       call fann_print_connections(ann)
        write(*,*)
     endif
 
@@ -165,7 +164,6 @@ contains
 
 
   function fnnlike_eval(x)
-    use fnn, only : fnn_run
     implicit none
     real(fp) :: fnnlike_eval
     real(fp), dimension(nout) :: feval
@@ -175,7 +173,7 @@ contains
 
     if (any(x.gt.1._fp).or.any(x.lt.0._fp)) stop 'fnnlike_eval: uncubed input!'
 
-    feval = real(fnn_run(x),fp)
+    feval = real(f_fann_run(real(x,FANN_TYPE)),fp)
 
     if (loglearned) then
        fnnlike_eval = feval(1) * (fmax-fmin) + fmin
