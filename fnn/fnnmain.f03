@@ -74,7 +74,7 @@ program fnnmain
 
 
   nNeurons(1) = ndim
-  nNeurons(2) = 8 !7
+  nNeurons(2) = 9
   nNeurons(3) = nout
 
   
@@ -87,14 +87,12 @@ program fnnmain
   case ('normal')
    
      call fnn_create_ann(numLayers,nNeurons)
-!     call fnn_set_activation_function_hidden('FANN_GAUSSIAN')
-     call fnn_set_activation_function_output('FANN_GAUSSIAN')
      call fnn_set_activation_function_hidden('FANN_SIGMOID')
-!     call fnn_set_activation_function_output('FANN_SIGMOID')
+     call fnn_set_activation_function_output('FANN_GAUSSIAN')
 
 
-!     call fnn_set_activation_steepness_hidden(0.9_fp)
-     call fnn_set_activation_steepness_output(0.9_fp)
+     call fnn_set_activation_steepness_hidden(0.8_fp)
+     call fnn_set_activation_steepness_output(0.8_fp)
      call fnn_print_connections()
 
      call fnn_create_train(ndata,ndim,nout,xcubes,fdata)
@@ -120,7 +118,7 @@ program fnnmain
 !     call fnn_set_train_error_function('FANN_ERRORFUNC_LINEAR')
 !     print *,'error function: ',fnn_get_train_error_function()
 
-     call fnn_set_bit_fail_limit(0.1_fp)
+     call fnn_set_bit_fail_limit(0.13_fp)
      print *,'get bit', fnn_get_bit_fail_limit()
      call fnn_set_train_stop_function('FANN_STOPFUNC_BIT')
 
