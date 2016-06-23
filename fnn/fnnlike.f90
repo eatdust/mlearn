@@ -18,6 +18,7 @@ module fnnlike
   logical, parameter :: display = .true.
   logical, parameter :: loglearned = .false.
 
+  public loglearned
   public initialize_fnn_like, free_fnn
   public fnnlike_eval, uncubize_fnnparams, cubize_fnnparams
   public check_fnn, get_fnn_ndim, get_fnn_nout
