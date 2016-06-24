@@ -154,11 +154,10 @@ contains
     ndim = int(fann_get_num_input(ann),ip)
     nout = int(fann_get_num_output(ann),ip)
 
-    if (display) then
-       write(*,*)
-       call fann_print_connections(ann)
-       write(*,*)
-    endif
+    write(*,*)
+    call fann_print_connections(ann)
+    write(*,*)
+
 
   end subroutine initialize_fnn_like
 
