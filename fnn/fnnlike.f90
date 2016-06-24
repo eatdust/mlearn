@@ -16,9 +16,11 @@ module fnnlike
 
 
   logical, parameter :: display = .true.
+
+!if the neural has been trained on the ln(like), or directly on the
+!like
   logical, parameter :: loglearned = .false.
 
-  public loglearned
   public initialize_fnn_like, free_fnn
   public fnnlike_eval, uncubize_fnnparams, cubize_fnnparams
   public check_fnn, get_fnn_ndim, get_fnn_nout
@@ -123,7 +125,11 @@ contains
        stop 'get_fnn_fmin: not initialized!'
     endif
     
-    get_fnn_fmin = fmin
+    if (loglearned) then
+       get_fnn_fmin = fmin
+    else
+       get_fnn_fmin = log(fmin)
+    endif
 
   end function get_fnn_fmin
 
@@ -136,8 +142,12 @@ contains
        stop 'get_fnn_fmax: not initialized!'
     endif
     
-    get_fnn_fmax = fmax
-
+    if (loglearned) then
+       get_fnn_fmax = fmax
+    else
+       get_fnn_fmax = log(fmax)
+    endif
+    
   end function get_fnn_fmax
 
 
