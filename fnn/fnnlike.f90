@@ -183,7 +183,7 @@ contains
 
     if (any(x.gt.1._fp).or.any(x.lt.0._fp)) stop 'fnnlike_eval: uncubed input!'
 
-    feval = real(ann,f_fann_run(real(x,FANN_TYPE)),fp)
+    feval = real(f_fann_run(ann,real(x,FANN_TYPE)),fp)
 
     if (loglearned) then
        fnnlike_eval = feval(1) * (fmax-fmin) + fmin
