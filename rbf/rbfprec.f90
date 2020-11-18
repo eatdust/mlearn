@@ -1,11 +1,49 @@
 module rbfprec
   use prec
+
   implicit none
 
   public
 
   
 contains
+
+
+  subroutine nearest_grid_point(ndim,isize,x,fvalue,fngp,fcount)
+    implicit none    
+    integer(ip), intent(in) :: ndim
+    integer(ip), dimension(ndim), intent(in) :: isize
+    real(fp), dimension(ndim), intent(in) :: x
+    real(fp), intent(in) :: fvalue
+    real(fp), dimension(product(isize)), intent(inout) :: fngp
+    integer(ip), dimension(product(isize)), intent(inout), optional :: fcount
+
+    integer(ip), dimension(ndim) :: ivec
+    integer(ip) :: n,q
+    
+
+    ivec(:) = 1 + int(x(:)*real(isize(:)-1,fp) + 0.5_fp)
+
+    
+    q = flatten_indices(ndim,isize,ivec)
+
+!do a recursive mean    
+    if (present(fcount)) then
+
+       fcount(q) = fcount(q) + 1
+
+       fngp(q) = (fvalue + fngp(q)*real(fcount(q)-1,fp))/real(fcount(q),fp)
+
+    else
+!if not, we integrate       
+
+       fngp(q) = fvalue + fngp(q)
+
+    end if
+    
+  end subroutine nearest_grid_point
+
+
 
   
   function flatten_indices(ndim,isize,ivec)

@@ -6,11 +6,15 @@ module rbfnd
 
   private
 
-  public rbf_random_centers, rbf_grid_centers, rbf_svd_weights, rbf_svd_eval
+  public rbf_random_centers, rbf_grid_centers, rbf_subgrid_centers
+  public rbf_datagrid_centers
+
+  public rbf_svd_weights, rbf_svd_eval
   public rbf_multiquad, rbf_inverse_multiquad, rbf_thin_plate, rbf_gaussian
   public rbf_polyharmonic_one, rbf_polyharmonic_three, rbf_polyharmonic_five
   public rbf_polyharmonic_two, rbf_polyharmonic_four, rbf_polyharmonic_six
-
+  public rbf_polyharmonic_log_two, rbf_polyharmonic_log_four
+  
 contains
 
 
@@ -31,9 +35,10 @@ contains
 
   end subroutine rbf_random_centers
 
-
+  
+  
+!return of set of grid points centered and equally spaced in all dimensions
   subroutine rbf_grid_centers(xctrs,ictrs)
-    use rbfprec, only : unflatten_indices
     implicit none
     real(fp), dimension(:,:), intent(out) :: xctrs
     integer(ip), dimension(:), intent(in), optional :: ictrs
@@ -58,7 +63,7 @@ contains
 
        if (npts**ndim.ne.nctrs) then
           write(*,*)'nctrs= ndim= npts= ',nctrs,ndim,npts
-          stop 'rbf_grid_centers: cannot equally grid!'
+          stop 'rbf_grid_centers: cannot get equally spaced grid!'
        endif
        isize = npts
     endif
@@ -73,8 +78,149 @@ contains
   end subroutine rbf_grid_centers
 
 
+
+!compress the grid to a subgrid given by xmin xmax [0,1]  
+  subroutine rbf_subgrid_centers(xctrs,ictrs,xmin,xmax)
+    use rbfprec, only : unflatten_indices
+    implicit none
+    real(fp), dimension(:,:), intent(out) :: xctrs
+    integer(ip), dimension(:), intent(in), optional :: ictrs
+    real(fp), dimension(:), intent(in) :: xmin, xmax
+    
+    integer(ip) :: ndim,i
+
+    ndim = size(xctrs,1)
+
+    if ((size(xmin,1).ne.ndim).or.(size(xmax,1).ne.ndim)) then
+       stop 'rbf_subgrid_centers: inconsistent input dimensions'
+    endif
+    
+    if ((any(xmin.gt.1._fp)) .or. (any(xmin.lt.0._fp))) then
+       write(*,*)'rbf_subgrid_centers:'
+       stop 'xmin not in [0,1]'
+    endif
+
+    if ((any(xmax.gt.1._fp)) .or. (any(xmax.lt.0._fp))) then
+       write(*,*)'rbf_subgrid_centers:'
+       stop 'xmmax not in [0,1]'
+    endif
+    
+    call rbf_grid_centers(xctrs,ictrs)
+
+    do i=1,ndim
+       xctrs(i,:) = xmin(i) + (xmax(i)-xmin(i))*xctrs(i,:)
+    enddo
+    
+
+  end subroutine rbf_subgrid_centers
+
   
 
+   
+!Cut of set of grid points equally spaced in all dimensions by
+!discarding region set in the function rbf_datagrid_discard()
+  subroutine rbf_datagrid_centers(xctrs,ictrs,xcubes,fdata,fcut)
+    use ioml, only : allwrite, delete_file
+    implicit none
+    real(fp), dimension(:,:), allocatable, intent(out) :: xctrs
+    integer(ip), dimension(:), intent(in) :: ictrs
+    real(fp), dimension(:,:), intent(in) :: xcubes
+    real(fp), dimension(:), intent(in) :: fdata
+
+    real(fp), intent(in), optional :: fcut
+    
+    integer(ip) :: ndim, ndata, nctrs
+    integer(ip) :: nskip, i, q, count
+
+    real(fp) :: fskip, fval
+    real(fp), dimension(:,:), allocatable :: xgrid
+    real(fp), dimension(:), allocatable :: fgrid
+    integer(ip), dimension(:), allocatable :: fcount
+
+    logical, parameter :: dumpngp = .true.
+    
+        
+    ndim = size(xcubes,1)
+    ndata = size(xcubes,2)
+
+    if ((size(fdata,1).ne.ndata).or.(size(ictrs,1).ne.ndim)) then
+       stop 'rbf_data_centers: array size pb!'
+    endif
+
+    if (present(fcut)) then
+       fskip = fcut
+    else
+       fskip = 0._fp
+    endif
+   
+    
+
+    allocate(fgrid(product(ictrs)))
+    allocate(fcount(product(ictrs)))
+    
+    fcount = 0
+    fgrid = 0._fp
+
+    
+    do i=1,ndata
+       call nearest_grid_point(ndim,ictrs,xcubes(:,i),fdata(i),fgrid,fcount)
+    enddo
+
+
+    allocate(xgrid(ndim,product(ictrs)))
+    call rbf_grid_centers(xgrid,ictrs)
+
+    
+    count = 0
+    do q=1,product(ictrs)
+       fval = 1._fp/sqrt(real(fcount(q),fp))
+       if (rbf_datagrid_discard(fval,fskip)) cycle
+       count = count + 1
+    enddo
+
+    
+    nctrs = count
+
+    allocate(xctrs(ndim,nctrs))
+    
+
+    count = 0
+    do q=1,product(ictrs)
+       fval = 1._fp/sqrt(real(fcount(q),fp))
+       if (rbf_datagrid_discard(fval,fskip)) cycle
+       count = count + 1
+       if (count.gt.nctrs) stop 'rbf_datagrid_centers: count screwed!'
+       xctrs(1:ndim,count) = xgrid(1:ndim,q)
+    enddo
+
+    if (dumpngp) then
+       call delete_file('datagrid.dat')
+       call allwrite('datagrid.dat',xgrid(1,:),xgrid(2,:),fgrid(:))
+    endif
+
+    deallocate(fcount)
+    deallocate(fgrid)
+    deallocate(xgrid)
+
+  end subroutine rbf_datagrid_centers
+
+
+  
+
+  function rbf_datagrid_discard(fval,fskip)
+    implicit none
+    logical :: rbf_datagrid_discard
+    real(fp), intent(in) :: fval, fskip
+    
+    rbf_datagrid_discard = .false.
+
+    rbf_datagrid_discard = (fval.gt.fskip) 
+
+  end function rbf_datagrid_discard
+  
+  
+
+  
 
   subroutine clock_random_seed()
     integer(ip) :: i, n, clock
@@ -158,6 +304,217 @@ contains
   end function rbf_svd_eval
   
 
+
+
+  
+  subroutine rbf_multiquad ( n, r, r0, v )
+    implicit none
+
+    integer ( ip ) n
+
+    real ( fp ) r(n)
+    real ( fp ) r0
+    real ( fp ) v(n)
+
+    v(1:n) = sqrt ( r(1:n)**2 + r0**2 )
+
+  end subroutine rbf_multiquad
+
+
+  
+  subroutine rbf_inverse_multiquad ( n, r, r0, v )
+       implicit none
+
+    integer ( ip ) n
+
+    real ( fp ) r(n)
+    real ( fp ) r0
+    real ( fp ) v(n)
+
+    v = 1.0D+00 / sqrt ( r**2 + r0**2 )
+
+  end subroutine rbf_inverse_multiquad
+
+
+  subroutine rbf_thin_plate ( n, r, r0, v )
+    implicit none
+
+    integer ( ip ) n  
+    integer ( ip ) i
+    real ( fp ) r(n)
+    real ( fp ) r0
+    real ( fp ) v(n)
+
+
+    do i = 1, n
+       if ( r(i) .le. 0.0D+00 ) then
+          v(i) = 0.0D+00       
+       else
+          v(i) = r(i)**2 * log ( r(i) / r0 )
+       end if
+    end do
+     
+  end subroutine rbf_thin_plate
+
+
+  subroutine rbf_gaussian ( n, r, r0, v )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+
+    v(1:n) = exp ( - 0.5D+00 * r(1:n)**2 / r0**2 )
+
+  end subroutine rbf_gaussian
+
+
+
+
+  subroutine rbf_polyharmonic_log ( n, r, r0, v, k )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0, ru
+    real(fp) :: v(n)
+    integer(ip) :: k,i
+
+    do i = 1, n
+       ru = r(i)/r0
+       if ( ru .le. 1._fp ) then
+          v(i) = r(i)**(k-1) * log(ru**r(i))
+       else
+          v(i) = r(i)**k * log ( ru )
+       end if
+    end do
+
+  end subroutine rbf_polyharmonic_log
+
+
+  
+  subroutine rbf_polyharmonic_log_two(n, r, r0, v )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+
+    call rbf_polyharmonic_log(n, r, r0, v,2_ip)
+
+  end subroutine rbf_polyharmonic_log_two
+
+
+  
+  subroutine rbf_polyharmonic_log_four(n, r, r0, v )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+
+    call rbf_polyharmonic_log(n, r, r0, v,4_ip)
+
+  end subroutine rbf_polyharmonic_log_four
+
+
+
+  
+  subroutine rbf_polyharmonic ( n, r, r0, v, k )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+    integer(ip) :: k
+
+    v(1:n) = (r(1:n)/r0)**k
+
+  end subroutine rbf_polyharmonic
+
+
+  
+
+  subroutine rbf_polyharmonic_one ( n, r, r0, v )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+
+    call rbf_polyharmonic(n, r, r0, v,1_ip)
+
+  end subroutine rbf_polyharmonic_one
+
+
+  
+
+  subroutine rbf_polyharmonic_two(n, r, r0, v )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+
+    call rbf_polyharmonic(n, r, r0, v,2_ip)
+
+  end subroutine rbf_polyharmonic_two
+
+
+  
+
+  subroutine rbf_polyharmonic_three ( n, r, r0, v )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+
+    call rbf_polyharmonic(n, r, r0, v, 3_ip)
+
+  end subroutine rbf_polyharmonic_three
+
+  
+
+  subroutine rbf_polyharmonic_four(n, r, r0, v )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+
+    call rbf_polyharmonic(n, r, r0, v,4_ip)
+
+  end subroutine rbf_polyharmonic_four
+
+
+  
+
+  subroutine rbf_polyharmonic_five ( n, r, r0, v )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+
+    call rbf_polyharmonic(n, r, r0, v, 5_ip)
+    
+  end subroutine rbf_polyharmonic_five
+
+
+  
+  subroutine rbf_polyharmonic_six(n, r, r0, v )
+    implicit none
+    integer(ip) :: n
+    real(fp) :: r(n)
+    real(fp) :: r0
+    real(fp) :: v(n)
+
+    call rbf_polyharmonic(n, r, r0, v,6_ip)
+
+  end subroutine rbf_polyharmonic_six
+
+  
+ 
 
   subroutine solve_svd ( m, n, a, b, x )
 
@@ -245,15 +602,17 @@ contains
 !    lwork, info )
 
     if (display) then
-       write(*,*)
        write(*,*)'solve_svd: calling lapack SVD...'
     endif
 
     call dgesdd(jobz, m, n, a, lda, sdiag, u, ldu, v, ldv, work, lwork, &
          iwork, info )
 
-    if (display) write(*,*)'solve_svd: svd done!'
-
+    if (display) then
+       write(*,*)'solve_svd: svd done!'
+       write(*,*)
+    endif
+    
     v = transpose(v)
 
     deallocate(work)
@@ -291,179 +650,5 @@ contains
   end subroutine solve_svd
 
 
-  
-  subroutine rbf_multiquad ( n, r, r0, v )
-    implicit none
-
-    integer ( ip ) n
-
-    real ( fp ) r(n)
-    real ( fp ) r0
-    real ( fp ) v(n)
-
-    v(1:n) = sqrt ( r(1:n)**2 + r0**2 )
-  end subroutine rbf_multiquad
-
-
-  subroutine rbf_inverse_multiquad ( n, r, r0, v )
-       implicit none
-
-    integer ( ip ) n
-
-    real ( fp ) r(n)
-    real ( fp ) r0
-    real ( fp ) v(n)
-
-    v = 1.0D+00 / sqrt ( r**2 + r0**2 )
-
-  end subroutine rbf_inverse_multiquad
-
-
-  subroutine rbf_thin_plate ( n, r, r0, v )
-    implicit none
-
-    integer ( ip ) n  
-    integer ( ip ) i
-    real ( fp ) r(n)
-    real ( fp ) r0
-    real ( fp ) v(n)
-
-
-    do i = 1, n
-       if ( r(i) .le. 0.0D+00 ) then
-          v(i) = 0.0D+00       
-       else
-          v(i) = r(i)**2 * log ( r(i) / r0 )
-       end if
-    end do
-     
-  end subroutine rbf_thin_plate
-
-
-  subroutine rbf_gaussian ( n, r, r0, v )
-    implicit none
-    integer(ip) :: n
-    real(fp) :: r(n)
-    real(fp) :: r0
-    real(fp) :: v(n)
-
-    v(1:n) = exp ( - 0.5D+00 * r(1:n)**2 / r0**2 )
-
-  end subroutine rbf_gaussian
-
-
-
-
-  subroutine rbf_polyharmonic_log ( n, r, r0, v, k )
-    implicit none
-    integer(ip) :: n
-    real(fp) :: r(n)
-    real(fp) :: r0, ru
-    real(fp) :: v(n)
-    integer(ip) :: k,i
-
-    do i = 1, n
-       ru = r(i)/r0
-       if ( ru .le. 1._fp ) then
-          v(i) = r(i)**(k-1) * log(ru**r(i))
-       else
-          v(i) = r(i)**k * log ( ru )
-       end if
-    end do
-
-  end subroutine rbf_polyharmonic_log
-
-
- 
-
-  subroutine rbf_polyharmonic ( n, r, r0, v, k )
-    implicit none
-    integer(ip) :: n
-    real(fp) :: r(n)
-    real(fp) :: r0
-    real(fp) :: v(n)
-    integer(ip) :: k
-
-    v(1:n) = (r(1:n)/r0)**k
-
-  end subroutine rbf_polyharmonic
-
-
-
-  subroutine rbf_polyharmonic_one ( n, r, r0, v )
-    implicit none
-    integer(ip) :: n
-    real(fp) :: r(n)
-    real(fp) :: r0
-    real(fp) :: v(n)
-
-    call rbf_polyharmonic(n, r, r0, v,1_ip)
-
-  end subroutine rbf_polyharmonic_one
-
-
-  subroutine rbf_polyharmonic_two(n, r, r0, v )
-    implicit none
-    integer(ip) :: n
-    real(fp) :: r(n)
-    real(fp) :: r0
-    real(fp) :: v(n)
-
-    call rbf_polyharmonic_log(n, r, r0, v,2_ip)
-
-  end subroutine rbf_polyharmonic_two
-
-
-
-  subroutine rbf_polyharmonic_three ( n, r, r0, v )
-    implicit none
-    integer(ip) :: n
-    real(fp) :: r(n)
-    real(fp) :: r0
-    real(fp) :: v(n)
-
-    call rbf_polyharmonic(n, r, r0, v, 3_ip)
-
-  end subroutine rbf_polyharmonic_three
-
-
-  subroutine rbf_polyharmonic_four(n, r, r0, v )
-    implicit none
-    integer(ip) :: n
-    real(fp) :: r(n)
-    real(fp) :: r0
-    real(fp) :: v(n)
-
-    call rbf_polyharmonic_log(n, r, r0, v,4_ip)
-
-  end subroutine rbf_polyharmonic_four
-
-
-
-  subroutine rbf_polyharmonic_five ( n, r, r0, v )
-    implicit none
-    integer(ip) :: n
-    real(fp) :: r(n)
-    real(fp) :: r0
-    real(fp) :: v(n)
-
-    call rbf_polyharmonic(n, r, r0, v, 5_ip)
-    
-  end subroutine rbf_polyharmonic_five
-
-
-  subroutine rbf_polyharmonic_six(n, r, r0, v )
-    implicit none
-    integer(ip) :: n
-    real(fp) :: r(n)
-    real(fp) :: r0
-    real(fp) :: v(n)
-
-    call rbf_polyharmonic_log(n, r, r0, v,6_ip)
-
-  end subroutine rbf_polyharmonic_six
-
-  
- 
 
 end module rbfnd

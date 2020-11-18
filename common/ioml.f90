@@ -10,7 +10,7 @@ module ioml
   public read_binned_posterior, posterior_boundaries
   public save_posterior, load_posterior, cubize_paramspace
   public save_boundaries, read_boundaries
-  public livewrite, delete_file
+  public livewrite, allwrite, delete_file
 
 
   interface read_binned_posterior
@@ -448,6 +448,58 @@ contains
 100 format(8(ES25.16E3))      
 
   end subroutine livewrite
+
+  subroutine allwrite(name,x,a,b,c,d,e,f,g)
+      implicit none
+      character(*) :: name
+      integer(ip) :: j,npts
+      real(fp) :: x(:),a(:)
+      real(fp), optional :: b(:),c(:),d(:),e(:),f(:),g(:)
+
+      npts=ubound(x,1)
+      
+      if (ubound(a,1).ne.npts) then
+         write(*,*)'WARNING: vectors length differ'
+      endif
+
+!      write(*,*)'__write: save in ',name
+      open(10,file=name,position='append',status='unknown')
+      
+      if (.not.present(b)) then
+         do j=1,npts      
+            write(10,100) x(j),a(j)
+         enddo
+      elseif (.not.present(c)) then
+         do j=1,npts      
+            write(10,100) x(j),a(j),b(j)
+         enddo
+      elseif (.not.present(d)) then
+         do j=1,npts      
+            write(10,100) x(j),a(j),b(j),c(j)            
+         enddo
+      elseif (.not.present(e)) then
+         do j=1,npts      
+            write(10,100) x(j),a(j),b(j),c(j),d(j)            
+         enddo
+      elseif (.not.present(f)) then
+         do j=1,npts      
+            write(10,100) x(j),a(j),b(j),c(j),d(j),e(j)            
+         enddo
+      elseif (.not.present(g)) then
+         do j=1,npts      
+            write(10,100) x(j),a(j),b(j),c(j),d(j),e(j),f(j)       
+         enddo
+      else
+         do j=1,npts      
+            write(10,100) x(j),a(j),b(j),c(j),d(j),e(j),f(j),g(j)            
+         enddo
+      endif
+      
+      close(10)
+
+100   format(8(ES25.16))      
+
+    end subroutine allwrite
 
 
 
