@@ -1,5 +1,5 @@
 module rbfprec
-  use prec
+  use mlprec
 
   implicit none
 

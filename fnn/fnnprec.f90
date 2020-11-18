@@ -1,3 +1,3 @@
 module fnnprec
-  use prec
+  use mlprec
 end module fnnprec

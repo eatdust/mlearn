@@ -1,5 +1,5 @@
 module ioml
-  use prec
+  use mlprec
   implicit none
 
   private

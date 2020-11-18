@@ -1,5 +1,5 @@
 module ioshep
-  use prec
+  use shepprec, only : ip, fp
   implicit none
 
   private

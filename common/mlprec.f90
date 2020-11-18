@@ -1,8 +1,8 @@
-module prec
+module mlprec
   implicit none
 
   integer, parameter :: fp = kind(1._8)
   integer, parameter :: ip = kind(4)
 
 
-end module prec
+end module mlprec

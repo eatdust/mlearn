@@ -1,5 +1,5 @@
 module iocmb
-  use prec
+  use mlprec
   implicit none
 
   private

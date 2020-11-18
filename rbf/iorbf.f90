@@ -1,5 +1,5 @@
 module iorbf
-  use prec
+  use rbfprec, only : ip, fp
   implicit none
 
   private
