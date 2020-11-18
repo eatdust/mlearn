@@ -2,6 +2,7 @@ program shepmain
   use shepprec
   use shepnd
   use ioml
+  use iocmb
   use ioshep
   implicit none
  

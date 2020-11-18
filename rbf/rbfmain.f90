@@ -1,6 +1,7 @@
 program rbfmain
   use rbfprec
   use rbfnd
+  use iocmb
   use ioml
   use iorbf
   implicit none

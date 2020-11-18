@@ -1,4 +1,4 @@
-module iomlearn
+module ioml
   use prec
   implicit none
 
@@ -285,4 +285,4 @@ contains
 
   
 
-end module iomlearn
+  end module ioml

@@ -1,6 +1,5 @@
 module iocmb
   use prec
-  use iomlearn, only : count_column
   implicit none
 
   private

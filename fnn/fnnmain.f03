@@ -1,6 +1,7 @@
 program fnnmain
   use fnnprec
   use fnn
+  use iocmb
   use ioml
 
   implicit none

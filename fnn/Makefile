@@ -11,7 +11,7 @@ LFLAGS= -ldoublefann
 #CPP=cpp -P -traditional-cpp 
 endif 
 
-OBJSCOM = prec.o ioml.o
+OBJSCOM = prec.o ioml.o iocmb.o
 
 OBJSFANN = fnnprec.o fann.o fnn.o
 
