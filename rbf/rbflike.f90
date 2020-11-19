@@ -1,6 +1,6 @@
 module rbflike
   use rbfprec
-  use rbfnd, only : rbf_polyharmonic_two
+  use rbfuncs, only : rbf_polyharmonic_two
   implicit none
 
 
