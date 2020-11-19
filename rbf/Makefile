@@ -13,7 +13,7 @@ endif
 
 OBJSCOM = mlprec.o ioml.o iocmb.o
 
-OBJSRBF = rbfprec.o iorbf.o rbfnd.o rbflike.o
+OBJSRBF = rbfprec.o iorbf.o rbfuncs.o rbfnd.o rbflike.o
 
  
 
