@@ -28,7 +28,7 @@ contains
     real(fp), dimension(n) :: v
     real(fp) :: k
 
-    call rbf_inverse_monomial(n,r,r0,v,2._fdp)
+    call rbf_inverse_monomial(n,r,r0,v,2._dp)
 
   end subroutine rbf_inverse_monomial_two
   
