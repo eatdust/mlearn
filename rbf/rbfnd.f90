@@ -11,10 +11,6 @@ module rbfnd
   public rbf_datagrid_centers
 
   public rbf_svd_weights, rbf_svd_eval
-  public rbf_multiquad, rbf_inverse_multiquad, rbf_thin_plate, rbf_gaussian
-  public rbf_polyharmonic_one, rbf_polyharmonic_three, rbf_polyharmonic_five
-  public rbf_polyharmonic_two, rbf_polyharmonic_four, rbf_polyharmonic_six
-  public rbf_polyharmonic_log_two, rbf_polyharmonic_log_four
   
 contains
 
