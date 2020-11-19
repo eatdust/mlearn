@@ -5,6 +5,15 @@ module ioml
   private
 
 
+  interface read_boundaries
+     module procedure read_boundaries_pointer, read_boundaries_array
+  end interface read_boundaries
+
+
+  interface load_inputdata
+     module procedure load_inputdata_pointer, load_inputdata_array
+  end interface load_inputdata
+
   public find_boundaries, save_boundaries, read_boundaries
   public cubize_paramspace
   public save_inputdata, load_inputdata
@@ -62,15 +71,16 @@ contains
 
 
 
-  subroutine read_boundaries(filename,xmin,xmax,fmin,fmax)
+
+  subroutine read_boundaries_array(filename,xmin,xmax,fmin,fmax)
     implicit none
     character(len=*), intent(in) :: filename
-    real(fp), dimension(:), pointer, intent(inout) :: xmin,xmax
+    real(fp), dimension(:), allocatable, intent(inout) :: xmin,xmax
     real(fp), intent(inout) :: fmin,fmax
     integer(ip) :: nunit
     integer(ip) :: j, ndim
 
-    if (associated(xmin).or.associated(xmax)) stop 'read_boundaries: already done!'
+    if (allocated(xmin).or.allocated(xmax)) stop 'read_boundaries_array: already done!'
 
     nunit = 411
 
@@ -88,9 +98,41 @@ contains
 
     close(nunit)
 
-  end subroutine read_boundaries
+  end subroutine read_boundaries_array
 
 
+  
+
+  subroutine read_boundaries_pointer(filename,xmin,xmax,fmin,fmax)
+    implicit none
+    character(len=*), intent(in) :: filename
+    real(fp), dimension(:), pointer, intent(inout) :: xmin,xmax
+    real(fp), intent(inout) :: fmin,fmax
+    integer(ip) :: nunit
+    integer(ip) :: j, ndim
+
+    if (associated(xmin).or.associated(xmax)) stop 'read_boundaries_pointer: already done!'
+
+    nunit = 411
+
+    open(nunit,file=filename,status='old')
+    read(nunit,*) ndim
+
+    allocate(xmin(ndim),xmax(ndim))
+
+    read(nunit,*)(xmin(j),j=1,ndim)
+    read(nunit,*)(xmax(j),j=1,ndim)
+
+    read(nunit,*)fmin
+    read(nunit,*)fmax
+
+
+    close(nunit)
+
+  end subroutine read_boundaries_pointer
+
+  
+  
   
   subroutine cubize_paramspace(xdata,xcubes)
     implicit none
@@ -149,7 +191,7 @@ contains
 
 
   
-  subroutine load_inputdata(filename,f,x)
+  subroutine load_inputdata_pointer(filename,f,x)
     implicit none
     character(len=*), intent(in) :: filename   
     real(fp), dimension(:), pointer :: f
@@ -161,7 +203,7 @@ contains
 
 
     if (associated(f).or.associated(x)) then
-       stop 'load_posterior: data already loaded!'
+       stop 'load_posterior_pointer: data already loaded!'
     endif
 
     open(unit=nunit,file=filename,status='old')
@@ -176,10 +218,41 @@ contains
     
     close(nunit)
 
-  end subroutine load_inputdata
+  end subroutine load_inputdata_pointer
 
 
 
+
+  subroutine load_inputdata_array(filename,f,x)
+    implicit none
+    character(len=*), intent(in) :: filename   
+    real(fp), dimension(:), allocatable :: f
+    real(fp), dimension(:,:), allocatable :: x
+
+    integer(ip), parameter :: nunit = 211
+
+    integer(ip) :: i,j, ndim, ndata
+
+
+    if (allocated(f).or.allocated(x)) then
+       stop 'load_posterior_array: data already loaded!'
+    endif
+
+    open(unit=nunit,file=filename,status='old')
+
+    read(nunit,*) ndim, ndata
+
+    allocate(f(ndata),x(ndim,ndata))
+
+    do i=1,ndata
+       read(nunit,*) f(i),(x(j,i),j=1,ndim)
+    enddo
+
+    close(nunit)
+
+  end subroutine load_inputdata_array
+
+  
    subroutine delete_file(name)
     implicit none
     character(len=*) :: name

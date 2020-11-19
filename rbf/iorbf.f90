@@ -4,7 +4,17 @@ module iorbf
 
   private
 
+  interface load_weights
+     module procedure load_weights_array, load_weights_pointer
+  end interface load_weights
 
+  interface load_centres
+     module procedure load_centres_array, load_centres_pointer
+  end interface load_centres
+  
+
+
+  
   public save_weights, load_weights
   public save_centres, load_centres
 
@@ -37,7 +47,36 @@ contains
 
   
 
-  subroutine load_weights(filename,scale,weight)
+  subroutine load_weights_array(filename,scale,weight)
+    implicit none
+    character(len=*), intent(in) :: filename
+    real(fp), intent(out) :: scale
+    real(fp), dimension(:), allocatable, intent(inout) :: weight
+
+    integer :: nunit
+    integer(ip) :: i, nw
+
+    if (allocated(weight)) then
+       stop 'load_weight_array: weight already loaded!'
+    endif
+    
+    nunit = 311
+
+    open(nunit,file=filename,status='old')
+    read(nunit,*) nw, scale
+
+    write(*,*)'load_weights_array: nw= scale= ',nw, scale
+
+    allocate(weight(nw))    
+    do i=1,nw
+       read(nunit,*) weight(i)
+    enddo
+    close(nunit)
+
+  end subroutine load_weights_array
+
+
+   subroutine load_weights_pointer(filename,scale,weight)
     implicit none
     character(len=*), intent(in) :: filename
     real(fp), intent(out) :: scale
@@ -47,7 +86,7 @@ contains
     integer(ip) :: i, nw
 
     if (associated(weight)) then
-       stop 'load_weight: weight already loaded!'
+       stop 'load_weight_pointer: weight already loaded!'
     endif
     
     nunit = 311
@@ -55,7 +94,7 @@ contains
     open(nunit,file=filename,status='old')
     read(nunit,*) nw, scale
 
-    write(*,*)'load_weights: nw= scale= ',nw, scale
+    write(*,*)'load_weights_pointer: nw= scale= ',nw, scale
 
     allocate(weight(nw))    
     do i=1,nw
@@ -63,7 +102,7 @@ contains
     enddo
     close(nunit)
 
-  end subroutine load_weights
+  end subroutine load_weights_pointer
 
 
 
@@ -91,7 +130,7 @@ contains
 
 
 
-   subroutine load_centres(filename,xctrs)
+  subroutine load_centres_pointer(filename,xctrs)
     implicit none
     character(len=*), intent(in) :: filename    
     real(fp), dimension(:,:), pointer, intent(inout) :: xctrs
@@ -108,7 +147,7 @@ contains
     open(nunit,file=filename,status='old')
     read(nunit,*) ndim, nw
       
-    write(*,*)'load_centres: ndim= nw= ',ndim,nw
+    write(*,*)'load_centres_pointer: ndim= nw= ',ndim,nw
 
     allocate(xctrs(ndim,nw))    
     do j=1,nw
@@ -116,8 +155,36 @@ contains
     enddo
     close(nunit)
 
-  end subroutine load_centres
+  end subroutine load_centres_pointer
 
 
+  
+  subroutine load_centres_array(filename,xctrs)
+    implicit none
+    character(len=*), intent(in) :: filename    
+    real(fp), dimension(:,:), allocatable, intent(inout) :: xctrs
+
+    integer :: nunit
+    integer(ip) :: i, j,nw ,ndim
+
+    if (allocated(xctrs)) then
+       stop 'load_centres: centres already loaded!'
+    endif
+    
+    nunit = 341
+
+    open(nunit,file=filename,status='old')
+    read(nunit,*) ndim, nw
+      
+    write(*,*)'load_centres_array: ndim= nw= ',ndim,nw
+
+    allocate(xctrs(ndim,nw))    
+    do j=1,nw
+       read(nunit,*) (xctrs(i,j),i=1,ndim)
+    enddo
+    close(nunit)
+
+  end subroutine load_centres_array
+  
 
 end module iorbf
