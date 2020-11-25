@@ -26,11 +26,37 @@ contains
     real(fp), dimension(n) :: r
     real(fp) :: r0
     real(fp), dimension(n) :: v
-    real(fp) :: k
 
     call rbf_inverse_monomial(n,r,r0,v,2._fp)
 
   end subroutine rbf_inverse_monomial_two
+
+
+
+  subroutine rbf_inverse_monomial_one(n, r, r0, v)
+    implicit none
+    integer(ip) :: n
+    real(fp), dimension(n) :: r
+    real(fp) :: r0
+    real(fp), dimension(n) :: v
+
+    call rbf_inverse_monomial(n,r,r0,v,1._fp)
+
+  end subroutine rbf_inverse_monomial_one
+
+  
+  
+  subroutine rbf_inverse_exponential(n, r, r0, v)
+    implicit none
+    integer(ip) :: n
+    real(fp), dimension(n) :: r
+    real(fp) :: r0
+    real(fp), dimension(n) :: v
+
+    v = 1._fp/(1._fp + exp(r/r0))
+
+  end subroutine rbf_inverse_exponential
+
   
   
   subroutine rbf_multiquad ( n, r, r0, v )
