@@ -1,11 +1,54 @@
 module rbfuncs
   use rbfprec
   implicit none
-
+  
   public
+
+
+  abstract interface
+
+     subroutine rbf_func(n,r,r0,v)
+       use rbfprec
+       implicit none
+       integer(ip) :: n
+       real(fp), dimension(n) :: r
+       real(fp) :: r0
+       real(fp), dimension(n) :: v       
+     end subroutine rbf_func
+
+  end interface
 
 contains
 
+!this is inverse_monomial_two, up to r/r0 = xbar, and after a decaying
+!gaussian with a given alpha. This ensures some regulariry converge
+!for instance. Function and first derivative are everywhere continous
+  subroutine rbf_inverse_monomial_gaussian(n, r, r0, v)
+    implicit none
+    integer(ip) :: n
+    real(fp), dimension(n) :: r
+    real(fp) :: r0
+    real(fp), dimension(n) :: v
+
+    real(fp), parameter :: xbar = 15._fp
+    real(fp), parameter :: alpha = 8._fp
+    
+    real(fp), parameter :: Agauss = 1._fp/(1._fp + xbar*xbar)
+    real(fp), parameter :: xgauss = 2._fp*xbar/(1._fp + xbar*xbar)/alpha
+
+    integer :: i
+    
+    do i = 1, n
+       if ( r(i) .le. xbar*r0 ) then
+          v(i) = 1._fp/(1._fp + (r(i)/r0)**2)
+       else
+          v(i) = Agauss*exp(-alpha*(r(i)/r0 - xbar)*((r(i)/r0 - xbar + 2._fp*xgauss)))
+       end if
+    end do
+
+  end subroutine rbf_inverse_monomial_gaussian
+
+  
 
   subroutine rbf_inverse_monomial(n, r, r0, v, k)
     implicit none
@@ -32,6 +75,19 @@ contains
   end subroutine rbf_inverse_monomial_two
 
 
+
+  subroutine rbf_inverse_monomial_four(n, r, r0, v)
+    implicit none
+    integer(ip) :: n
+    real(fp), dimension(n) :: r
+    real(fp) :: r0
+    real(fp), dimension(n) :: v
+
+    call rbf_inverse_monomial(n,r,r0,v,4._fp)
+
+  end subroutine rbf_inverse_monomial_four
+  
+  
 
   subroutine rbf_inverse_monomial_one(n, r, r0, v)
     implicit none
