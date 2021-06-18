@@ -11,9 +11,9 @@ LFLAGS= -lblas -llapack
 #CPP=cpp -P -traditional-cpp 
 endif 
 
-OBJSCOM = mlprec.o ioml.o iocmb.o
+OBJSCOM = mlprec.o ioml.o iocmb.o lm.o
 
-OBJSRBF = rbfprec.o iorbf.o rbfuncs.o rbfnd.o rbflike.o
+OBJSRBF = rbfprec.o iorbf.o rbfuncs.o rbfnd.o rbflearn.o rbflike.o
 
  
 
