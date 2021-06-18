@@ -1,6 +1,7 @@
 module rbflike
   use rbfprec
   use rbfuncs, only : rbf_polyharmonic_two, rbf_inverse_monomial_two
+  use rbfuncs, only : rbf_inverse_multiquad
   implicit none
 
 
@@ -174,7 +175,7 @@ contains
 
     if (any(x.gt.1._fp).or.any(x.lt.0._fp)) stop 'rbflike_eval: uncubed input!'
 
-    rbflike_eval = rbf_svd_eval(ndim,nctrs,scale,rbf_polyharmonic_two,xctrs,weights,x)
+    rbflike_eval = rbf_svd_eval(ndim,nctrs,scale,rbf_inverse_multiquad,xctrs,weights,x)
 
   end function rbflike_eval
 
