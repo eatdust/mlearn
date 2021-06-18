@@ -4,7 +4,7 @@
   - shepard method
   - fast artificial neural network library
 
-* The mastlikes branch contains main program needed to do the learing
+* The mastlikes branch contains main program needed to do the learning
   for posteriors output of cmb code as multinest or cosmomc
 
 * The fastlikes branch is the masterlikes stripped from main program
