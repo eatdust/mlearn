@@ -1,7 +1,8 @@
 program rbfmain
   use rbfprec
-  use rbfuncs
   use rbfnd
+  use rbflearn, only : learn_with_fitscale_rbfngp, learn_with_rbfngp,learn_with_rbf
+  use rbflearn, only : ptr_rbf_func
   use ioml
   use iocmb
   use iorbf
@@ -45,9 +46,10 @@ program rbfmain
   allocate(ictrs(ndim))
   
 !  ictrs = (/4,4,4,11/)
-  ictrs = (/12,18,12,12/)
+!  ictrs = (/12,18,12,12/)
 !  ictrs = (/12,20,16/)
-
+  ictrs = (/6,6,6,6/)
+  
   nctrs = product(ictrs)
 !  nctrs = 1400
 
@@ -76,41 +78,19 @@ program rbfmain
 
   if (training) then
 
-     allocate(xctrs(ndim,nctrs))
-     allocate(weights(nctrs))
+     call learn_with_fitscale_rbfngp(ndim,ndata,ictrs,xcubes,fdata)
 
-!     call rbf_random_centers(xctrs)
-
-     call rbf_grid_centers(xctrs,ictrs)
-
-!tp     
-!     scale = 0.5_fp/real(nctrs,fp)**(1._fp/real(ndim,fp))
-
-     scale = 0.01_fp
- 
-     print *,'scale=',scale
-
-     print *,'computing weights...'
-
-     call rbf_svd_weights(ndim,ndata,nctrs,scale,rbf_polyharmonic_two,xcubes,fdata &
-       ,xctrs,weights)
-
-     call save_weights('weights.dat',scale,weights)
-     call save_centres('centres.dat',xctrs)
      call save_boundaries('bounds.dat',xnmin,xnmax,fmin,fmax)
+
      print *,'done!'
-
-  else
-
-     call load_weights('weights.dat',scale,weights)
-     call load_centres('centres.dat',xctrs)
-     if (size(weights,1).ne.size(xctrs,2)) stop 'weights/centres mismatch!'
-     nctrs = size(weights,1)
-
-!     call initialize_rbf_like('weights.dat','centres.dat')
 
   endif
 
+  call load_weights('weights.dat',scale,weights)
+  call load_centres('centres.dat',xctrs)
+  if (size(weights,1).ne.size(xctrs,2)) stop 'weights/centres mismatch!'
+  nctrs = size(weights,1)
+  
   allocate(x(ndim))
   
   lnAmin = xnmin(1)
@@ -119,16 +99,19 @@ program rbfmain
   sr1max = xnmax(2)
   sr2min = xnmin(3)
   sr2max = xnmax(3)
-  sr3min = xnmin(4)
-  sr3max = xnmax(4)
-
+  if (ndim.gt.3) then
+     sr3min = xnmin(4)
+     sr3max = xnmax(4)
+  endif
+     
   call delete_file('output.dat')
   call delete_file('output2.dat')
   call delete_file('output3.dat')
-  lnA = 3.1
-  sr3 = 0
 
 
+  lnA = 3.09
+  sr3 = 0.0
+  
   do i=1,ndump
      sr1 = sr1min + (sr1max-sr1min)*real(i-1,fp)/real(ndump-1,fp)
 
@@ -137,14 +120,15 @@ program rbfmain
         x(1) = (lnA-xnmin(1))/(xnmax(1)-xnmin(1))
         x(2) = (sr1-xnmin(2))/(xnmax(2)-xnmin(2))
         x(3) = (sr2-xnmin(3))/(xnmax(3)-xnmin(3))
-!        x(4) = (sr3-xnmin(4))/(xnmax(4)-xnmin(4))
+        x(4) = (sr3-xnmin(4))/(xnmax(4)-xnmin(4))
 
-        f = rbf_svd_eval(ndim,nctrs,scale,rbf_polyharmonic_two,xctrs,weights,x)
+        f = rbf_svd_eval(ndim,nctrs,scale,ptr_rbf_func,xctrs,weights,x)
         call livewrite('output.dat',sr1,sr2,f)
 !        call livewrite('test.dat',sr1,sr2,rbflike_eval(x))
      enddo
   enddo
 
+  
   sr3=0
   sr2 = 0.04
   do i=1,ndump
@@ -155,18 +139,18 @@ program rbfmain
         x(1) = (lnA-xnmin(1))/(xnmax(1)-xnmin(1))
         x(2) = (sr1-xnmin(2))/(xnmax(2)-xnmin(2))
         x(3) = (sr2-xnmin(3))/(xnmax(3)-xnmin(3))
-!        x(4) = (sr3-xnmin(4))/(xnmax(4)-xnmin(4))
+        x(4) = (sr3-xnmin(4))/(xnmax(4)-xnmin(4))
 
-        f = rbf_svd_eval(ndim,nctrs,scale,rbf_polyharmonic_two,xctrs,weights,x)
+        f = rbf_svd_eval(ndim,nctrs,scale,ptr_rbf_func,xctrs,weights,x)
         call livewrite('output2.dat',sr1,lnA,f)
 !        call livewrite('test.dat',sr1,sr2,rbflike_eval(x))
      enddo
 
   enddo
 
-  stop
+  if (ndim.lt.4) stop
 
-  lnA = 3.1
+  lnA = 3.09
   sr2 = 0.04
   do i=1,ndump
      sr1 = sr1min + (sr1max-sr1min)*real(i-1,fp)/real(ndump-1,fp)
@@ -178,7 +162,7 @@ program rbfmain
         x(3) = (sr2-xnmin(3))/(xnmax(3)-xnmin(3))
         x(4) = (sr3-xnmin(4))/(xnmax(4)-xnmin(4))
 
-        f = rbf_svd_eval(ndim,nctrs,scale,rbf_polyharmonic_two,xctrs,weights,x)
+        f = rbf_svd_eval(ndim,nctrs,scale,ptr_rbf_func,xctrs,weights,x)
 !        call livewrite('output3.dat',sr2,sr3,f)
         call livewrite('output3.dat',sr1,sr3,f)
 !        call livewrite('test.dat',sr1,sr2,rbflike_eval(x))
