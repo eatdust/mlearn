@@ -13,7 +13,7 @@ endif
 
 OBJSCOM = mlprec.o ioml.o iocmb.o
 
-OBJSSHEP = shepprec.o qshepmdata.o ioshep.o qshepmd.o shepnd.o
+OBJSSHEP = shepprec.o qshepmdata.o ioshep.o qshepmd.o shepnd.o sheplike.o
 
 
 shepmain.$(ext): $(OBJSCOM) $(OBJSSHEP) shepmain.o
