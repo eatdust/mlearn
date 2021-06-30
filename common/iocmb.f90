@@ -37,7 +37,7 @@ contains
     real(fp), dimension(:,:), pointer :: params
     logical, intent(in), optional :: logize
 
-    real(fp), dimension(:), pointer :: postvector
+    real(fp), dimension(:), pointer :: postvector => null()
 
     call read_binned_posterior_vector(filename,postvector,params,logize)
 
