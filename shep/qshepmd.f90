@@ -1,3 +1,10 @@
+! This file can be redistributed, modified and used for non-commercial
+! purposes (netlib repository). It is not GPLv3 and the precise terms
+! of the license agreement should be negociated with the authors.
+! 
+! http://netlib.org/toms/905
+!
+
 MODULE QSHEPMD_MOD
 PRIVATE
 PUBLIC QSHEPM, QSMVAL
