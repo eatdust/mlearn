@@ -13,12 +13,12 @@
 !   GNU General Public License for more details.
 !
 !   You should have received a copy of the GNU General Public License
-!   along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+!   along with mlearn.  If not, see <https://www.gnu.org/licenses/>.
 
 module qshepmdata
   use real_precision
   implicit none
-  real(kind=r), dimension(:,:), allocatable :: A, IW
-  REAL(kind=r), dimension(:), allocatable :: DX, XMIN, RSQ, WS
+  real(kind=r8), dimension(:,:), allocatable :: A, IW
+  real(kind=r8), dimension(:), allocatable :: DX, XMIN, RSQ, WS
   integer, dimension(:), allocatable :: LCELL, LNEXT
 end module qshepmdata
