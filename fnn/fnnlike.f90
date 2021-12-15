@@ -249,16 +249,20 @@ contains
     real(fp), dimension(ndim) :: cubize_fnnparams
     real(fp), dimension(ndim), intent(in) :: uncubed
 
+    integer :: i
+    
     if (ndim.ne.size(uncubed,1)) then
        stop 'uncubize_fnnparams: sizes do not match!'
     endif
 
-    if (xpmax.ne.xpmin) then
-       cubize_fnnparams = (uncubed - xpmin)/(xpmax-xpmin)
-    else
-       cubize_fnnparams = 0._fp
-    endif
-
+    do i=1,ndim
+       if (xpmax(i).ne.xpmin(i)) then
+          cubize_fnnparams(i) = (uncubed(i) - xpmin(i))/(xpmax(i)-xpmin(i))
+       else
+          cubize_fnnparams(i) = 0._fp
+       endif
+    enddo
+    
   end function cubize_fnnparams
 
 

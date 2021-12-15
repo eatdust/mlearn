@@ -233,15 +233,20 @@ contains
     real(fp), dimension(ndim) :: cubize_shepparams
     real(fp), dimension(ndim), intent(in) :: uncubed
 
+    integer :: i
+    
     if (ndim.ne.size(uncubed,1)) then
        stop 'uncubize_shepparams: sizes do not match!'
     endif
 
-    if (xpmax.ne.xpmin) then
-       cubize_shepparams = (uncubed - xpmin)/(xpmax-xpmin)
-    else
-       cubize_shepparams = 0._fp
-    endif
+    do i=1,ndim
+       if (xpmax(i).ne.xpmin(i)) then
+          cubize_shepparams(i) = (uncubed(i) - xpmin(i))/(xpmax(i)-xpmin(i))
+       else
+          cubize_shepparams(i) = 0._fp
+       endif
+    enddo
+    
 
   end function cubize_shepparams
 
