@@ -236,15 +236,19 @@ contains
     real(fp), dimension(ndim) :: cubize_rbfparams
     real(fp), dimension(ndim), intent(in) :: uncubed
 
+    integer :: i
+    
     if (ndim.ne.size(uncubed,1)) then
        stop 'uncubize_rbfparams: sizes do not match!'
     endif
 
-    if (xpmax.ne.xpmin) then
-       cubize_rbfparams = (uncubed - xpmin)/(xpmax-xpmin)
-    else
-       cubize_rbfparams = 0._fp
-    endif
+    do i=1,ndim
+       if (xpmax(i).ne.xpmin(i)) then
+          cubize_rbfparams(i) = (uncubed(i) - xpmin(i))/(xpmax(i)-xpmin(i))
+       else
+          cubize_rbfparams(i) = 0._fp
+       endif
+    enddo
 
   end function cubize_rbfparams
 
