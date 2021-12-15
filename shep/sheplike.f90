@@ -237,7 +237,11 @@ contains
        stop 'uncubize_shepparams: sizes do not match!'
     endif
 
-    cubize_shepparams = (uncubed - xpmin)/(xpmax-xpmin)
+    if (xpmax.ne.xpmin) then
+       cubize_shepparams = (uncubed - xpmin)/(xpmax-xpmin)
+    else
+       cubize_shepparams = 0._fp
+    endif
 
   end function cubize_shepparams
 

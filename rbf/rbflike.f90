@@ -240,7 +240,11 @@ contains
        stop 'uncubize_rbfparams: sizes do not match!'
     endif
 
-    cubize_rbfparams = (uncubed - xpmin)/(xpmax-xpmin)
+    if (xpmax.ne.xpmin) then
+       cubize_rbfparams = (uncubed - xpmin)/(xpmax-xpmin)
+    else
+       cubize_rbfparams = 0._fp
+    endif
 
   end function cubize_rbfparams
 

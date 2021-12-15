@@ -253,7 +253,11 @@ contains
        stop 'uncubize_fnnparams: sizes do not match!'
     endif
 
-    cubize_fnnparams = (uncubed - xpmin)/(xpmax-xpmin)
+    if (xpmax.ne.xpmin) then
+       cubize_fnnparams = (uncubed - xpmin)/(xpmax-xpmin)
+    else
+       cubize_fnnparams = 0._fp
+    endif
 
   end function cubize_fnnparams
 
