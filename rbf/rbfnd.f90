@@ -25,12 +25,16 @@ module rbfnd
   private
 
   public rbf_random_centers, rbf_grid_centers, rbf_subgrid_centers
-  public rbf_datagrid_centers
+  public rbf_datagrid_centers, rbf_halfgrid_centers
 
   public rbf_svd_weights, rbf_svd_eval
   
 contains
 
+
+
+
+  
 
 !returns a set of random position in the ndim-dimensional unit cube
   subroutine rbf_random_centers(xctrs)
@@ -50,8 +54,40 @@ contains
   end subroutine rbf_random_centers
 
   
+
+!return of set of grid points excluding boundaries and equally spaced
+!in all dimensions, they're the ones matching the nearest halfgrid point
+!function
+  subroutine rbf_halfgrid_centers(xnear,inear)
+    implicit none
+    real(fp), dimension(:,:), intent(out) :: xnear
+    integer(ip), dimension(:), intent(in) :: inear
+
+    integer(ip) :: ndim, nnear
+    integer(ip) :: npts, q
+    integer(ip), dimension(:), allocatable :: ivec
+
+    ndim = size(xnear,1)
+    nnear = size(xnear,2)
+    
+    allocate(ivec(ndim))
+
+    if (size(inear,1).ne.ndim) stop 'rbf_halfgrid_centers: inear mismatch!'
+    
+    do q=1,nnear
+       ivec = unflatten_indices(ndim,inear,q)
+       xnear(:,q) = (real(ivec,fp)-0.5_fp)/real(inear,fp)
+    enddo
+    
+    deallocate(ivec)
+
+  end subroutine rbf_halfgrid_centers
+
+
   
-!return of set of grid points centered and equally spaced in all dimensions
+  
+!return of set of grid points centered and equally spaced in all
+!dimensions, including boundaries (matches nearest_grid_point)
   subroutine rbf_grid_centers(xctrs,ictrs)
     implicit none
     real(fp), dimension(:,:), intent(out) :: xctrs
