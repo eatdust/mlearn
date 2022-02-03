@@ -25,7 +25,48 @@ module rbfprec
   
 contains
 
+![-1--2--3--...--nx-]  mapped to [0,1] (grid excludes boundaries but has equal statistics)
+  subroutine nearest_halfgrid_point(ndim,isize,x,fvalue,fngp,fcount)
+    implicit none    
+    integer(ip), intent(in) :: ndim
+    integer(ip), dimension(ndim), intent(in) :: isize
+    real(fp), dimension(ndim), intent(in) :: x
+    real(fp), intent(in) :: fvalue
+    real(fp), dimension(product(isize)), intent(inout) :: fngp
+    integer(ip), dimension(product(isize)), intent(inout), optional :: fcount
 
+    integer(ip), dimension(ndim) :: ivec
+    integer(ip) :: n,q
+    
+
+    do n=1,ndim
+       ivec(n) = ceiling( x(n)*real(isize(n),fp) )
+       if (ivec(n).eq.0) ivec(n) = 1
+    enddo
+       
+    
+!    print *,'x ivec= ',x(1),(real(ivec(1),fp)-0.5_fp)/real(isize(1),fp)
+    
+    q = flatten_indices(ndim,isize,ivec)
+
+!do a recursive mean    
+    if (present(fcount)) then
+
+       fcount(q) = fcount(q) + 1
+
+       fngp(q) = (fvalue + fngp(q)*real(fcount(q)-1,fp))/real(fcount(q),fp)
+
+    else
+!if not, we integrate       
+
+       fngp(q) = fvalue + fngp(q)
+
+    end if
+    
+  end subroutine nearest_halfgrid_point
+
+
+![1--2--3--4--..--nx] mapped to [0,1] (grid has boundaries but with half statistics)
   subroutine nearest_grid_point(ndim,isize,x,fvalue,fngp,fcount)
     implicit none    
     integer(ip), intent(in) :: ndim
@@ -41,6 +82,7 @@ contains
 
     ivec(:) = 1 + int(x(:)*real(isize(:)-1,fp) + 0.5_fp)
 
+!       print *,'x ivec= ',x(1)*isize(1),ivec(1)
     
     q = flatten_indices(ndim,isize,ivec)
 
