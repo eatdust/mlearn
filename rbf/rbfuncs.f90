@@ -26,6 +26,7 @@ module rbfuncs
   abstract interface
 
      subroutine rbf_func(n,r,r0,v)
+!$omp declare simd uniform(n,r0)
        use rbfprec
        implicit none
        integer(ip) :: n
@@ -69,6 +70,7 @@ contains
   
 
   subroutine rbf_inverse_monomial(n, r, r0, v, k)
+!$omp declare simd uniform(n,r0,k)
     implicit none
     integer(ip) :: n
     real(fp), dimension(n) :: r
@@ -82,6 +84,7 @@ contains
 
 
   subroutine rbf_inverse_monomial_two(n, r, r0, v)
+!$omp declare simd uniform(n,r0)
     implicit none
     integer(ip) :: n
     real(fp), dimension(n) :: r

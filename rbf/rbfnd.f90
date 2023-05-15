@@ -343,10 +343,12 @@ contains
 
     include 'rbfnd.h'
 
+!$omp simd    
     do j = 1, nctrs
        r(j) = sqrt ( sum ( ( x(1:ndim) - xctrs(1:ndim,j) )**2 ) )
     enddo
-
+!$omp end simd
+    
     call phi(nctrs,r,scale,v)
 
     rbf_svd_eval  = dot_product(v,weights)
