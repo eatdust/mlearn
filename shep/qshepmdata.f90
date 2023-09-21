@@ -21,7 +21,4 @@ module qshepmdata
   real(kind=r8), dimension(:,:), allocatable :: A, IW
   real(kind=r8), dimension(:), allocatable :: DX, XMIN, RSQ, WS
   integer, dimension(:), allocatable :: LCELL, LNEXT
-
-!$omp threadprivate(A,IW,DX,XMIN,WS,LCELL,LNEXT)
-
 end module qshepmdata
