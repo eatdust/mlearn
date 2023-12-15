@@ -314,7 +314,9 @@ contains
     real(fp), dimension(ndata,nctrs) :: a
 
     include 'rbfnd.h'
-
+!$omp parallel do &
+!$omp default(shared) &    
+!$omp private(i,r,v)
     do i = 1, ndata
        do j = 1,nctrs
           r(j) = sqrt ( sum ( ( xdata(1:ndim,i) - xctrs(1:ndim,j) )**2 ) )
@@ -322,7 +324,8 @@ contains
        call phi(nctrs,r,scale,v)
        a(i,1:nctrs) = v(1:nctrs)
     end do
-
+!$omp end parallel do
+    
     call solve_svd (ndata,nctrs,a,fdata,weights)
 
   end subroutine rbf_svd_weights
