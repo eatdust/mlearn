@@ -434,21 +434,38 @@ contains
 
 
 !for A
-!the man is screwed    lwork = 3*min(m,n)*min(m,n) + max(max(m,n),4*min(m,n)*min(m,n)+4*min(m,n))
-    lwork=  4*MIN(m,n)*MIN(m,n) + MAX(m,n) + 9*MIN(m,n)
+!the man is screwed. This is not enough:
+!    lwork = 3*min(m,n)*min(m,n) + max(max(m,n),4*min(m,n)*min(m,n)+4*min(m,n))
+!this works:
+!   lwork=  4*MIN(m,n)*MIN(m,n) + MAX(m,n) + 9*MIN(m,n)
+!but, instead, let's ask the lapack the minimal size
+
     liwork = 8*min(m,n)
-
-
-    allocate (work(1:lwork))
     allocate(iwork(1:liwork))
 
-!    call dgesvd ( jobu, jobv, m, n, a, lda, sdiag, u, ldu, v, ldv, work, &
-!    lwork, info )
+!query mode    
+    lwork=-1
+    allocate(work(1))
+
+    call dgesdd(jobz, m, n, a, lda, sdiag, u, ldu, v, ldv, work, lwork, &
+         iwork, info )
+
+    lwork=work(1)
+    write(*,*)'solve_svd: lwork= ',lwork
+    if (lwork.lt.0) then
+       stop 'integer overflow (use lapack64!)'
+    endif
+
+    deallocate(work)
+    allocate (work(1:lwork))
 
     if (display) then
        write(*,*)'solve_svd: calling lapack SVD...'
     endif
 
+!    call dgesvd ( jobu, jobv, m, n, a, lda, sdiag, u, ldu, v, ldv, work, &
+!    lwork, info )
+    
     call dgesdd(jobz, m, n, a, lda, sdiag, u, ldu, v, ldv, work, lwork, &
          iwork, info )
 
