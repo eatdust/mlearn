@@ -316,7 +316,7 @@ contains
     include 'rbfnd.h'
 !$omp parallel do &
 !$omp default(shared) &    
-!$omp private(i,r,v)
+!$omp private(i,j,r,v)
     do i = 1, ndata
        do j = 1,nctrs
           r(j) = sqrt ( sum ( ( xdata(1:ndim,i) - xctrs(1:ndim,j) )**2 ) )
